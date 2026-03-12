@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Brew & Bloom — Cafe Strategy</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#f5efe6;--espresso:#2c1810;--mocha:#6b3a2a;--latte:#c4956a;
+  --foam:#fdf8f2;--green:#3a6b4a;--red:#8b2c2c;--gold:#c4a24a;
+  --purple:#5a3a7a;--border:rgba(44,24,16,0.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--cream);color:var(--espresso);font-family:'DM Sans',sans-serif;min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 20%,rgba(196,149,106,.12) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 80%,rgba(44,24,16,.06) 0%,transparent 50%);}
+
+/* HEADER */
+.header{background:var(--espresso);color:var(--cream);padding:14px 26px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(44,24,16,.3);}
+.brand{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:900;letter-spacing:-.02em;}
+.brand span{color:var(--latte);}
+.hstats{display:flex;gap:20px;}
+.stat{text-align:center;}
+.slabel{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;opacity:.6;}
+.sval{font-family:'DM Mono',monospace;font-size:.88rem;font-weight:500;}
+.sval.pos{color:#7ec89e;}.sval.neg{color:#e88;}
+.pbadge{background:var(--latte);color:var(--espresso);font-family:'DM Mono',monospace;font-size:.68rem;font-weight:500;padding:5px 12px;border-radius:20px;}
+
+/* LAYOUT */
+.main{max-width:1280px;margin:0 auto;padding:20px 18px;display:grid;grid-template-columns:1fr 360px;gap:18px;}
+
+/* CARDS */
+.card{background:var(--foam);border:1px solid var(--border);border-radius:16px;padding:19px;box-shadow:0 2px 12px rgba(44,24,16,.06);}
+.ctitle{font-family:'Playfair Display',serif;font-size:.93rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px;color:var(--mocha);}
+
+/* EVENT */
+.evbanner{border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:11px;animation:slideIn .4s ease;color:white;}
+.evbanner.good{background:linear-gradient(135deg,var(--green),#2a4a3a);}
+.evbanner.bad{background:linear-gradient(135deg,var(--red),#5a1a1a);}
+.evbanner.neutral{background:linear-gradient(135deg,#5a4a3a,var(--espresso));}
+.evicon{font-size:1.3rem;flex-shrink:0;}
+.evtitle{font-family:'Playfair Display',serif;font-size:.85rem;font-weight:700;margin-bottom:2px;}
+.evdesc{font-size:.75rem;opacity:.88;line-height:1.4;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ADVISOR */
+.advisor{background:linear-gradient(135deg,#fffbf0,#fff8ec);border:1.5px solid var(--gold);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;animation:slideIn .3s ease;}
+.av-avatar{font-size:1.25rem;flex-shrink:0;}
+.av-name{font-size:.62rem;font-family:'DM Mono',monospace;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;}
+.av-tip{font-size:.77rem;color:var(--espresso);line-height:1.4;}
+.av-tip strong{color:var(--mocha);}
+
+/* PRODUCTS GRID — 4 columns now */
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.pcard{background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;transition:all .2s;position:relative;}
+.pcard.unlocked:hover{border-color:var(--latte);box-shadow:0 4px 14px rgba(196,149,106,.2);transform:translateY(-2px);}
+.pcard.locked{opacity:.35;}
+.pname{font-family:'Playfair Display',serif;font-size:.85rem;font-weight:700;margin-bottom:1px;}
+.psub{font-size:.64rem;color:var(--mocha);margin-bottom:8px;font-family:'DM Mono',monospace;}
+.pstat{display:flex;justify-content:space-between;font-size:.71rem;margin-bottom:3px;}
+.pstat span:first-child{color:#aaa;}
+.pstat span:last-child{font-family:'DM Mono',monospace;font-weight:500;}
+.dbar-w{height:4px;background:var(--border);border-radius:99px;margin-top:6px;overflow:hidden;}
+.dbar{height:100%;background:var(--latte);border-radius:99px;transition:width .5s ease;}
+/* variance band on bar */
+.dbar-range{height:4px;background:var(--border);border-radius:99px;margin-top:3px;overflow:hidden;position:relative;}
+.dbar-lo{position:absolute;top:0;left:0;height:100%;background:rgba(196,149,106,.35);border-radius:99px;}
+.dbar-hi{position:absolute;top:0;left:0;height:100%;background:rgba(58,107,74,.25);border-radius:99px;}
+.dbar-mid{position:absolute;top:0;left:0;height:100%;background:var(--latte);border-radius:99px;width:3px;}
+.mbadge{position:absolute;top:8px;right:8px;font-size:.61rem;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:99px;font-weight:500;}
+.mbadge.high{background:rgba(58,107,74,.12);color:var(--green);}
+.mbadge.low{background:rgba(139,44,44,.1);color:var(--red);}
+.mbadge.mid{background:rgba(196,162,74,.15);color:var(--gold);}
+.variance-label{font-size:.62rem;color:#bbb;font-family:'DM Mono',monospace;margin-top:4px;}
+
+/* TOOLTIP */
+.tip-wrap{position:relative;display:inline-flex;}
+.tip-wrap .tip{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);
+  background:var(--espresso);color:var(--cream);font-size:.69rem;padding:6px 9px;border-radius:8px;
+  pointer-events:none;opacity:0;transition:opacity .15s;z-index:50;font-family:'DM Sans',sans-serif;
+  line-height:1.4;max-width:200px;white-space:normal;text-align:center;width:max-content;}
+.tip-wrap .tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--espresso);}
+.tip-wrap:hover .tip{opacity:1;}
+.iicon{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--border);font-size:.57rem;color:var(--mocha);font-style:normal;cursor:help;flex-shrink:0;margin-left:4px;}
+
+/* DECISIONS */
+.dgrid{display:grid;gap:12px;}
+.dlabel{font-size:.77rem;color:#666;margin-bottom:3px;display:flex;align-items:center;}
+.drow{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;}
+.dval{font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:99px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--mocha);border-radius:50%;cursor:pointer;border:2px solid var(--cream);box-shadow:0 2px 4px rgba(0,0,0,.15);}
+input[type=range]::-webkit-slider-thumb:hover{background:var(--espresso);}
+.phint{font-size:.65rem;margin-top:2px;font-family:'DM Mono',monospace;}
+.phint.warn{color:var(--red);}.phint.ok{color:var(--green);}.phint.neutral{color:#ccc;}
+
+/* SECTION DIVIDER in decisions */
+.dsection{font-size:.68rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:var(--latte);margin-top:4px;margin-bottom:2px;padding-top:8px;border-top:1px solid var(--border);}
+
+/* MARKETING CARD */
+.mkt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+@media(max-width:420px){.mkt-grid{grid-template-columns:1fr 1fr;}}
+.mkt-btn{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;cursor:pointer;background:white;
+  transition:all .2s;text-align:left;font-family:'DM Sans',sans-serif;}
+.mkt-btn:hover{border-color:var(--mocha);}
+.mkt-btn.selected{border-color:var(--espresso);background:var(--espresso);color:var(--cream);}
+.mkt-btn.selected .mkt-sub{color:rgba(255,255,255,.6);}
+.mkt-name{font-size:.78rem;font-weight:600;}
+.mkt-sub{font-size:.66rem;color:#aaa;font-family:'DM Mono',monospace;margin-top:2px;}
+.mkt-impact{font-size:.68rem;color:var(--green);margin-top:3px;font-family:'DM Mono',monospace;}
+.mkt-btn.selected .mkt-impact{color:#7ec89e;}
+
+/* TOGGLE */
+.tbtn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.71rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;color:var(--espresso);}
+.tbtn.active{background:var(--espresso);color:var(--cream);border-color:var(--espresso);}
+.tbtn:hover{border-color:var(--mocha);}
+
+/* CTA */
+.cta{width:100%;background:var(--espresso);color:var(--cream);border:none;padding:13px;border-radius:12px;font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:12px;transition:all .2s;}
+.cta:hover:not(:disabled){background:var(--mocha);transform:translateY(-1px);box-shadow:0 6px 18px rgba(44,24,16,.25);}
+.cta:disabled{opacity:.4;cursor:not-allowed;}
+
+/* BREAKEVEN — LIVE */
+.bebar-w{background:var(--border);border-radius:99px;height:8px;margin:7px 0;overflow:hidden;position:relative;}
+.bebar{height:100%;border-radius:99px;transition:width .4s ease;}
+.bebar.under{background:linear-gradient(90deg,var(--latte),var(--mocha));}
+.bebar.over{background:linear-gradient(90deg,var(--green),#5a9a7a);}
+/* projected overlay bar */
+.bebar-proj{position:absolute;top:0;right:0;height:100%;border-radius:0 99px 99px 0;
+  background:rgba(90,58,122,.35);transition:width .3s ease;}
+.benums{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.67rem;color:#aaa;}
+.be-proj-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;
+  font-size:.72rem;padding:7px 10px;border-radius:8px;background:rgba(90,58,122,.07);border:1px solid rgba(90,58,122,.15);}
+.be-proj-row .proj-label{color:var(--purple);font-family:'DM Mono',monospace;font-size:.65rem;}
+.be-proj-row .proj-val{font-family:'DM Mono',monospace;font-weight:600;font-size:.8rem;}
+
+/* CHART */
+#pchart{width:100%;height:85px;}
+
+/* HISTORY */
+.hlist{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;}
+.hitem{display:flex;justify-content:space-between;align-items:center;padding:6px 9px;border-radius:8px;background:white;border:1px solid var(--border);font-size:.75rem;}
+.pnum{font-family:'DM Mono',monospace;font-size:.65rem;color:#ccc;}
+.pv{font-family:'DM Mono',monospace;font-weight:500;}
+.pv.pos{color:var(--green);}.pv.neg{color:var(--red);}
+
+/* INVENTORY */
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.iitem{background:white;border:1px solid var(--border);border-radius:10px;padding:8px 10px;}
+.iname{font-size:.69rem;color:#aaa;margin-bottom:2px;}
+.ival{font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500;}
+.ival.low{color:var(--red);}.ival.ok{color:var(--green);}
+.ibar{height:3px;background:var(--border);border-radius:99px;margin-top:4px;overflow:hidden;}
+.ibar-f{height:100%;border-radius:99px;transition:width .4s;}
+.ibar-f.low{background:var(--red);}.ibar-f.ok{background:var(--green);}
+
+/* HIRE */
+.hire-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.hire-row:last-child{border-bottom:none;}
+.hire-info strong{display:block;font-size:.76rem;font-weight:500;margin-bottom:1px;}
+.hire-info span{color:#aaa;font-size:.68rem;font-family:'DM Mono',monospace;}
+.hbtn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 10px;font-size:.71rem;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;color:var(--espresso);}
+.hbtn:hover:not(:disabled){background:var(--espresso);color:var(--cream);border-color:var(--espresso);}
+.hbtn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* RESULT MODAL */
+.roverlay{position:fixed;inset:0;background:rgba(44,24,16,.52);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(3px);animation:fadeIn .2s ease;}
+.rbox{background:var(--foam);border-radius:20px;padding:28px;max-width:500px;width:93%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .25s ease;max-height:90vh;overflow-y:auto;}
+.rtitle{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;margin-bottom:13px;}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:.8rem;}
+.rrow:last-of-type{border-bottom:none;}
+.rrow .rv{font-family:'DM Mono',monospace;font-weight:500;}
+.rtotal{display:flex;justify-content:space-between;padding:9px 12px;border-radius:10px;margin-top:7px;font-weight:600;}
+.rtotal.pos{background:rgba(58,107,74,.1);color:var(--green);}
+.rtotal.neg{background:rgba(139,44,44,.08);color:var(--red);}
+.rtip{margin-top:11px;padding:9px 13px;background:#fffbf0;border:1px solid var(--gold);border-radius:10px;font-size:.76rem;line-height:1.5;}
+.rtip strong{color:var(--mocha);}
+/* variance breakdown in result */
+.var-row{display:flex;justify-content:space-between;font-size:.71rem;padding:3px 0;color:#888;}
+.var-row span:last-child{font-family:'DM Mono',monospace;}
+
+/* GAME OVER */
+.goverlay{position:fixed;inset:0;background:rgba(44,24,16,.75);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(5px);animation:fadeIn .3s ease;}
+.gobox{background:var(--foam);border-radius:20px;padding:36px;max-width:500px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:popIn .3s ease;}
+.gobox h2{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:6px;}
+.gobox p{color:#666;margin-bottom:12px;font-size:.84rem;line-height:1.6;}
+.fstat{font-family:'DM Mono',monospace;font-size:1.45rem;font-weight:500;margin:11px 0;}
+.fstat.pos{color:var(--green);}.fstat.neg{color:var(--red);}
+.sbreak{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:9px 0;text-align:left;}
+.si{background:white;border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-size:.73rem;}
+.si strong{display:block;font-family:'DM Mono',monospace;font-size:.8rem;margin-top:2px;}
+
+/* TUTORIAL */
+.tut-ov{position:fixed;inset:0;background:rgba(44,24,16,.82);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(5px);animation:fadeIn .3s ease;}
+.tut-box{background:var(--foam);border-radius:20px;padding:32px;max-width:540px;width:93%;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:popIn .3s ease;max-height:90vh;overflow-y:auto;}
+.tut-box h2{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:900;margin-bottom:4px;}
+.tut-box .sub{color:var(--mocha);font-size:.84rem;margin-bottom:16px;}
+.tstep{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.79rem;line-height:1.5;}
+.tstep:last-child{border-bottom:none;}
+.ticon{font-size:1.15rem;flex-shrink:0;margin-top:1px;}
+
+/* TOAST */
+.twrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:600;pointer-events:none;}
+.toast{background:var(--espresso);color:var(--cream);padding:8px 14px;border-radius:10px;font-size:.76rem;max-width:270px;animation:toastIn .3s ease;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.toast.good{background:var(--green);}.toast.warn{background:var(--red);}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.hlist::-webkit-scrollbar{width:3px;}
+.hlist::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+.unlock-hint{font-size:.69rem;color:var(--latte);font-style:italic;margin-top:3px;}
+/* ── iOS Safari tap fix — cursor:pointer enables tap events ── */
+button, input, .mkt-btn, .tbtn, .hbtn, .cta, .pcard.unlocked {
+  cursor: pointer;
+  -webkit-tap-highlight-color: rgba(196,149,106,0.2);
+  touch-action: manipulation;
+}
+input[type=range] {
+  touch-action: pan-x;
+  -webkit-tap-highlight-color: transparent;
+}
+/* ── MOBILE / iPHONE FIXES ───────────────────────────────────── */
+@media(max-width:850px){
+  .main{grid-template-columns:1fr;}
+  .pgrid{grid-template-columns:repeat(2,1fr);}
+  .hstats{gap:10px;}
+}
+
+@media(max-width:600px){
+  /* Header — stack into two rows on small screens */
+  .header{flex-wrap:wrap;gap:8px;padding:10px 14px;}
+  .brand{font-size:1.2rem;width:100%;}
+  .hstats{width:100%;justify-content:space-between;gap:6px;overflow-x:auto;}
+  .slabel{font-size:0.68rem;}   /* was .55rem — too small for iPhone */
+  .sval{font-size:0.85rem;}
+  .pbadge{font-size:0.72rem;padding:4px 10px;}
+
+  /* Main layout padding */
+  .main{padding:12px 10px;gap:12px;}
+
+  /* Cards */
+  .card{padding:14px 12px;border-radius:12px;}
+  .ctitle{font-size:0.88rem;}
+
+  /* Product grid — 2 columns on phone */
+  .pgrid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .pcard{padding:10px 10px;}
+  .pname{font-size:0.88rem;}     /* was .85rem — fine, but boost slightly */
+  .psub{font-size:0.72rem;}      /* was .64rem */
+  .pstat{font-size:0.75rem;}     /* was .71rem */
+  .mbadge{font-size:0.68rem;}    /* was .61rem */
+  .variance-label{font-size:0.68rem;} /* was .62rem */
+
+  /* Decisions area */
+  .dlabel{font-size:0.82rem;}    /* was .77rem */
+  .dval{font-size:0.85rem;}      /* was .80rem */
+  .phint{font-size:0.72rem;}     /* was .65rem */
+  .dsection{font-size:0.75rem;}  /* was .68rem */
+
+  /* Range sliders — much bigger tap target for fingers */
+  input[type=range]{
+    height:6px;
+    padding:10px 0;   /* increases touch area vertically */
+    cursor:pointer;
+    touch-action:pan-x;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    width:26px;        /* was 14px — minimum 44px touch target via padding */
+    height:26px;
+    border-width:3px;
+  }
+
+  /* Marketing buttons — bigger tap targets */
+  .mkt-btn{padding:11px 10px;}
+  .mkt-name{font-size:0.82rem;}  /* was .78rem */
+  .mkt-sub{font-size:0.72rem;}   /* was .66rem */
+  .mkt-impact{font-size:0.72rem;}/* was .68rem */
+
+  /* Toggle / hire buttons */
+  .tbtn{padding:9px 14px;font-size:0.78rem;}  /* was .71rem */
+  .hbtn{padding:10px 14px;font-size:0.78rem;} /* was .71rem */
+
+  /* CTA button */
+  .cta{font-size:1rem;padding:15px;}
+
+  /* Breakeven area */
+  .benums{font-size:0.72rem;}    /* was .67rem */
+
+  /* History list */
+  .hitem{font-size:0.78rem;}     /* was .75rem */
+  .pnum{font-size:0.70rem;}      /* was .65rem */
+  .pv{font-size:0.78rem;}
+
+  /* Inventory */
+  .iname{font-size:0.75rem;}     /* was .69rem */
+  .ival{font-size:0.85rem;}      /* was .82rem */
+
+  /* Hire area */
+  .hire-info strong{font-size:0.82rem;}  /* was .76rem */
+  .hire-info span{font-size:0.72rem;}    /* was .68rem */
+
+  /* Result modal */
+  .rbox{padding:20px 16px;border-radius:16px;}
+  .rtitle{font-size:1.1rem;}
+  .rrow{font-size:0.82rem;}      /* was .80rem */
+  .rtip{font-size:0.80rem;}      /* was .76rem */
+  .var-row{font-size:0.75rem;}   /* was .71rem */
+
+  /* Game over box */
+  .gobox{padding:24px 18px;}
+  .gobox h2{font-size:1.5rem;}
+  .gobox p{font-size:0.86rem;}   /* was .84rem */
+  .si{font-size:0.78rem;}        /* was .73rem */
+  .si strong{font-size:0.82rem;} /* was .80rem */
+
+  /* Tutorial box */
+  .tut-box{padding:22px 16px;}
+  .tut-box h2{font-size:1.4rem;}
+  .tstep{font-size:0.82rem;}     /* was .79rem */
+
+  /* Toast messages */
+  .toast{font-size:0.80rem;max-width:88vw;}  /* was .76rem */
+  .twrap{bottom:12px;right:12px;left:12px;}
+}
+
+/* Touch-friendly tooltips — tap to reveal on mobile */
+@media(hover:none){
+  .tip-wrap .tip{display:none;}
+  .tip-wrap .iicon{
+    background:var(--latte);
+    color:white;
+    width:18px;height:18px;
+    font-size:0.70rem;
+  }
+  /* Show tooltip on focus for accessibility */
+  .tip-wrap:active .tip{
+    display:block;
+    opacity:1;
+    position:fixed;
+    bottom:80px;
+    left:50%;
+    transform:translateX(-50%);
+    width:88vw;
+    max-width:320px;
+    z-index:999;
+    font-size:0.80rem;
+    padding:10px 14px;
+    border-radius:10px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- TUTORIAL -->
+<div class="tut-ov" id="tut-ov">
+  <div class="tut-box">
+    <div style="font-size:2.2rem;margin-bottom:6px;">☕</div>
+    <h2>Welcome to Brew & Bloom</h2>
+    <div class="sub">Run your café for 10 periods. Make it profitable.</div>
+    <div class="tstep"><div class="ticon">📊</div><div><strong>Breakeven bar updates live</strong> as you adjust prices. Watch the projected vs actual bar — aim for green before ending each period.</div></div>
+    <div class="tstep"><div class="ticon">🎲</div><div><strong>Demand is randomised</strong> each period with ±variance around the forecast. Range bands on each product card show best/worst case. Plan for downside!</div></div>
+    <div class="tstep"><div class="ticon">💰</div><div><strong>Price strategically.</strong> Higher price = more margin per cup, fewer cups sold. The sweet spot depends on your cost base and current event.</div></div>
+    <div class="tstep"><div class="ticon">📣</div><div><strong>Spend on marketing</strong> to boost demand across all products. Choose from Social, Flyers, or Sponsorship — each costs differently but drives more cups sold.</div></div>
+    <div class="tstep"><div class="ticon">🍫</div><div><strong>Hot Chocolate</strong> is your fourth product — launch it for £200. High margin, seasonal appeal, and loyal repeat customers.</div></div>
+    <div class="tstep"><div class="ticon">👥</div><div><strong>Staff carefully.</strong> Each hire adds +12% capacity but £400/period in fixed costs. Over-staffing early is a common killer.</div></div>
+    <div class="tstep"><div class="ticon">⚡</div><div><strong>Market events</strong> hit every period. React by adjusting prices and marketing spend. Good events = raise prices. Bad events = protect volume.</div></div>
+    <button class="cta" onclick="closeTut()" style="margin-top:14px;touch-action:manipulation;">Open for business! ☕</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;flex-wrap:wrap;">
+    <div class="brand">Brew <span>&</span> Bloom</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+      <button onclick="document.getElementById('tut-ov').style.display='flex'"
+        style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--cream);border-radius:8px;padding:8px 12px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;min-height:36px;touch-action:manipulation;">? Help</button>
+      <div class="pbadge" id="period-badge">Period 1 / 10</div>
+    </div>
+  </div>
+  <div class="hstats" style="width:100%;display:flex;gap:6px;margin-top:4px;">
+    <div class="stat"><div class="slabel">Cash</div><div class="sval" id="hd-cash">£5,000</div></div>
+    <div class="stat"><div class="slabel">Cum. P&L</div><div class="sval" id="hd-profit">£0</div></div>
+    <div class="stat"><div class="slabel">Staff</div><div class="sval" id="hd-staff">2</div></div>
+    <div class="stat"><div class="slabel">Cups Sold</div><div class="sval" id="hd-cups">0</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- LEFT -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div id="ev-area"></div>
+    <div id="adv-area"></div>
+
+    <div class="card">
+      <div class="ctitle">☕ Menu & Demand Forecast
+        <span class="tip-wrap"><i class="iicon">i</i><div class="tip">Bars show expected demand. Shaded range = random variance that will apply when the period runs. Hover stats for details.</div></span>
+      </div>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">🎯 Decisions This Period</div>
+      <div class="dgrid" id="darea"></div>
+      <button class="cta" id="ep-btn" onclick="endPeriod()" style="touch-action:manipulation;">End Period & See Results →</button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="card">
+      <div class="ctitle">📊 Breakeven — Live Projection
+        <span class="tip-wrap"><i class="iicon">i</i><div class="tip">Updates instantly as you change prices or marketing spend. Purple = projected change from your decisions.</div></span>
+      </div>
+      <div id="be-area"></div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">📈 Profit Chart & History</div>
+      <canvas id="pchart"></canvas>
+      <div class="hlist" id="hlist" style="margin-top:9px;"><div style="font-size:.74rem;color:#bbb;text-align:center;padding:11px 0;">No periods yet.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">📦 Inventory
+        <span class="tip-wrap"><i class="iicon">i</i><div class="tip">Low stock = missed sales. Restocks automatically each period but can run short after high-demand events.</div></span>
+      </div>
+      <div class="igrid" id="inv-area"></div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">👩‍🍳 Staff Management
+        <span class="tip-wrap"><i class="iicon">i</i><div class="tip">Each hire: +12% demand capacity, +£400/period fixed cost. Worth it only if extra cups sold cover the wage.</div></span>
+      </div>
+      <div id="hire-area"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="roverlay" id="r-ov" style="display:none;"><div class="rbox" id="r-box"></div></div>
+
+<!-- GAME OVER -->
+<div class="goverlay" id="go-ov" style="display:none;">
+  <div class="gobox">
+    <div style="font-size:2.7rem;" id="go-emoji">🏆</div>
+    <h2 id="go-title"></h2><p id="go-desc"></p>
+    <div class="fstat" id="go-stat"></div>
+    <div class="sbreak" id="go-br"></div>
+    <button class="cta" onclick="restartGame()" style="max-width:200px;margin:0 auto;display:block;touch-action:manipulation;">Play Again ↺</button>
+  </div>
+</div>
+
+<div class="twrap" id="twrap"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════
+const PERIODS=10, FIXED=800, SCOST=400;
+
+// Variable cost per cup
+const COGS={latte:1.20, espresso:0.80, americano:0.90, hotchoc:1.50};
+// Expected base demand (before elasticity, staff, events, marketing)
+const BDEM={latte:40, espresso:35, americano:30, hotchoc:28};
+// Default prices
+const BPRICE={latte:3.50, espresso:2.50, americano:3.00, hotchoc:3.80};
+// Demand volatility — random multiplier drawn from [1-v, 1+v]
+const VARIANCE={latte:0.20, espresso:0.18, americano:0.22, hotchoc:0.25};
+
+const MARKETING_OPTIONS=[
+  {id:'none',    name:'No Marketing',   cost:0,   boost:0.00, icon:'—',  desc:'Save the cash.'},
+  {id:'social',  name:'Social Media',   cost:150, boost:0.12, icon:'📱', desc:'+12% demand, £150'},
+  {id:'flyers',  name:'Leaflet Drop',   cost:250, boost:0.18, icon:'📄', desc:'+18% demand, £250'},
+  {id:'sponsor', name:'Sponsorship',    cost:400, boost:0.28, icon:'🎯', desc:'+28% demand, £400'},
+];
+
+const EVENTS=[
+  {type:'good',   icon:'🎉',title:'Street Festival!',          desc:'Foot traffic surge.',                    dm:1.30},
+  {type:'bad',    icon:'🌧️',title:'Terrible Weather',          desc:'Customers stay home. Demand −20%.',      dm:0.80},
+  {type:'bad',    icon:'☕',title:'New Competitor Opened',      desc:'Chain café nearby. Demand −15%.',        dm:0.85},
+  {type:'good',   icon:'📰',title:'Rave Review Online!',        desc:'Food blogger loved you. Demand +25%.',   dm:1.25},
+  {type:'bad',    icon:'📦',title:'Supply Shortage',            desc:'Extra £150 costs this period.',          dm:1.00, ca:150},
+  {type:'good',   icon:'☀️',title:'Bank Holiday Weekend',       desc:'Great weather out. Demand +20%.',        dm:1.20},
+  {type:'neutral',icon:'📅',title:'Steady Trading',            desc:'Nothing unusual. Normal conditions.',    dm:1.00},
+  {type:'neutral',icon:'📅',title:'Quiet Period',              desc:'Business as usual.',                     dm:1.00},
+  {type:'good',   icon:'📱',title:'Viral Social Post!',         desc:'Latte art viral! Latte +40%.',           dm:1.00, lb:0.40},
+  {type:'bad',    icon:'😷',title:'Local Health Scare',         desc:'Footfall down. Demand −25%.',            dm:0.75},
+  {type:'good',   icon:'🏢',title:'New Office Opened Nearby',   desc:'New regulars. Demand +18%.',             dm:1.18},
+  {type:'bad',    icon:'🚧',title:'Roadworks Outside',          desc:'Hard to reach. Demand −22%.',            dm:0.78},
+  {type:'good',   icon:'❄️',title:'Cold Snap!',                 desc:'Hot drinks surge! HotChoc +35%.',        dm:1.10, hc:0.35},
+  {type:'bad',    icon:'🔥',title:'Heatwave',                   desc:'Hot drinks suffer. HotChoc −30%.',       dm:1.05, hcn:-0.30},
+];
+
+const TIPS={
+  start:'**Start tip:** Watch the **live breakeven bar** as you set prices. You need contribution margin above £800 fixed costs to make any profit.',
+  lowCash:'⚠️ **Cash is tight.** Avoid marketing spend or new hires. Focus on price — even £0.30 more per drink can save the period.',
+  launchNow:'🌟 **You haven\'t launched Hot Chocolate or Americano yet.** Both have great margins. The £200 launch fee pays back in 1–2 periods.',
+  goodEvent:'🎉 **Demand is up!** Perfect time to raise prices slightly — customers are already coming. Capture the extra margin.',
+  badEvent:'🌧️ **Demand is down.** Hold prices. If you can afford it, a small marketing push can counteract the drop.',
+  overBE:'✅ **Above breakeven!** Consider: does a marketing spend generate enough extra cups to justify its cost?',
+  underBE:'📉 **Below breakeven.** Try raising prices £0.20–£0.40 — the margin uplift typically outweighs the small demand drop.',
+  period8:'⏰ **Final stretch!** Max pricing — loyal customers in later periods are less price-sensitive. Push margins hard.',
+  tooManyStaff:'💸 **High labour costs.** Check if extra capacity is actually converting to enough extra cups to justify the wage.',
+  marketing:'📣 **Marketing tip:** Social Media (£150) gives the best ROI at low cash. Sponsorship (£400) only makes sense if you\'re already profitable.',
+};
+
+let G;
+
+function init(){
+  G={
+    period:1, cash:5000, cumProfit:0, staff:2, totalCups:0, history:[],
+    unlocked:{latte:true, espresso:true, americano:false, hotchoc:false},
+    launches:{americano:false, hotchoc:false},
+    prices:{latte:3.50, espresso:2.50, americano:3.00, hotchoc:3.80},
+    inv:{latte:60, espresso:60, americano:0, hotchoc:0, cups:100},
+    mktChoice:'none',
+    event:null, decided:false,
+  };
+  document.getElementById('go-ov').style.display='none';
+  document.getElementById('r-ov').style.display='none';
+  renderAll();
+}
+
+// ═══════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════
+function renderAll(){
+  document.getElementById('period-badge').textContent=`Period ${G.period} / ${PERIODS}`;
+  updHeader(); renderEvent(); renderAdvisor(); renderProducts();
+  renderDecisions(); renderBE(); renderInv(); renderHire(); renderHistory(); drawChart();
+}
+
+function updHeader(){
+  document.getElementById('hd-cash').textContent=fmt(G.cash);
+  const pe=document.getElementById('hd-profit');
+  pe.textContent=fmt(G.cumProfit); pe.className='sval '+(G.cumProfit>=0?'pos':'neg');
+  document.getElementById('hd-staff').textContent=G.staff;
+  document.getElementById('hd-cups').textContent=G.totalCups;
+}
+
+function fmt(n){return(n<0?'-£':'£')+Math.abs(Math.round(n)).toLocaleString();}
+
+function renderEvent(){
+  const a=document.getElementById('ev-area');
+  if(!G.event){a.innerHTML='';return;}
+  const e=G.event;
+  a.innerHTML=`<div class="evbanner ${e.type}"><div class="evicon">${e.icon}</div>
+    <div><div class="evtitle">${e.title}</div><div class="evdesc">${e.desc}</div></div></div>`;
+}
+
+function renderAdvisor(){
+  const fc=FIXED+(G.staff-2)*SCOST;
+  const {rev,vc}=totals();
+  const cont=rev-vc;
+  const mkt=MARKETING_OPTIONS.find(m=>m.id===G.mktChoice);
+  let msg=TIPS.start;
+  if(G.period>=8) msg=TIPS.period8;
+  else if(G.cash<1200) msg=TIPS.lowCash;
+  else if(G.event&&G.event.type==='good') msg=TIPS.goodEvent;
+  else if(G.event&&G.event.type==='bad') msg=TIPS.badEvent;
+  else if((!G.unlocked.americano&&!G.launches.americano)||(!G.unlocked.hotchoc&&!G.launches.hotchoc)) {
+    if(G.period>=3) msg=TIPS.launchNow;
+  } else if((G.staff-2)*SCOST>800) msg=TIPS.tooManyStaff;
+  else if(G.mktChoice==='none'&&G.cash>600&&G.period>2) msg=TIPS.marketing;
+  else if(cont>=fc) msg=TIPS.overBE;
+  else if(G.period>1) msg=TIPS.underBE;
+  document.getElementById('adv-area').innerHTML=`<div class="advisor">
+    <div class="av-avatar">🧑‍💼</div>
+    <div><div class="av-name">Business Advisor</div>
+    <div class="av-tip">${msg.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div></div></div>`;
+}
+
+// Expected demand (no randomness — used for forecasting)
+function demForecast(k, ev, mktBoost){
+  const e=ev||G.event||{};
+  const mb=mktBoost!==undefined?mktBoost:(MARKETING_OPTIONS.find(m=>m.id===G.mktChoice)||{boost:0}).boost;
+  if(!G.unlocked[k]) return 0;
+  let d=BDEM[k];
+  d*=Math.pow(BPRICE[k]/G.prices[k],1.6); // price elasticity
+  d*=(1+(G.staff-2)*0.12);                 // staff capacity
+  d*=(e.dm||1.0);                           // event demand multiplier
+  d*=(1+mb);                                // marketing boost
+  if(k==='latte'&&e.lb)   d*=(1+e.lb);
+  if(k==='hotchoc'&&e.hc) d*=(1+e.hc);
+  if(k==='hotchoc'&&e.hcn)d*=(1+e.hcn);
+  return Math.max(0,d);
+}
+
+// Actual demand used at period end — includes random variance
+function demActual(k, ev, mktBoost){
+  const base=demForecast(k, ev, mktBoost);
+  const v=VARIANCE[k]||0.20;
+  // Gaussian-ish via sum of uniforms (Box-Muller approximation with clamp)
+  const rand=((Math.random()+Math.random()+Math.random()+Math.random())/4 - 0.5)*2; // ~[-1,1]
+  const factor=1+(rand*v);
+  return Math.max(0, base*factor);
+}
+
+function totals(prices, mktBoost, ev){
+  const p=prices||G.prices;
+  const mb=mktBoost!==undefined?mktBoost:(MARKETING_OPTIONS.find(m=>m.id===G.mktChoice)||{boost:0}).boost;
+  const e=ev||G.event||{};
+  let rev=0,vc=0;
+  Object.keys(BDEM).forEach(k=>{
+    if(!G.unlocked[k]) return;
+    const d=demForecast(k,e,mb);
+    rev+=p[k]*d; vc+=COGS[k]*d;
+  });
+  return{rev,vc};
+}
+
+function renderProducts(){
+  const drinks=[
+    {k:'latte',e:'🥛',n:'Latte'},
+    {k:'espresso',e:'⚡',n:'Espresso'},
+    {k:'americano',e:'🫗',n:'Americano'},
+    {k:'hotchoc',e:'🍫',n:'Hot Choc'},
+  ];
+  const mktBoost=(MARKETING_OPTIONS.find(m=>m.id===G.mktChoice)||{boost:0}).boost;
+  document.getElementById('pgrid').innerHTML=drinks.map(d=>{
+    const locked=!G.unlocked[d.k];
+    const forecast=demForecast(d.k, G.event||{}, mktBoost);
+    const v=VARIANCE[d.k]||0.20;
+    const lo=Math.max(0,forecast*(1-v)), hi=forecast*(1+v);
+    const bpLo=Math.min(100,(lo/70)*100), bpHi=Math.min(100,(hi/70)*100), bpMid=Math.min(100,(forecast/70)*100);
+    const cogs=COGS[d.k];
+    const margin=(G.prices[d.k]-cogs)/G.prices[d.k]*100;
+    const mc=margin>65?'high':margin>50?'mid':'low';
+    return`<div class="pcard ${locked?'locked':'unlocked'}">
+      ${!locked?`<div class="mbadge ${mc}">${Math.round(margin)}%</div>`:''}
+      <div class="pname">${d.e} ${d.n}</div>
+      <div class="psub">${locked?'🔒 Not launched':'Active'}</div>
+      <div class="pstat tip-wrap"><span>Price</span><span>${fmt(G.prices[d.k])}</span>
+        <div class="tip">Adjust below. Higher = more margin, lower demand (elasticity ~1.6).</div></div>
+      <div class="pstat tip-wrap"><span>COGS</span><span>£${cogs.toFixed(2)}</span>
+        <div class="tip">Variable cost per cup served.</div></div>
+      <div class="pstat"><span>Forecast</span><span>${locked?'—':Math.round(forecast)}</span></div>
+      <div class="pstat tip-wrap"><span>Range</span><span>${locked?'—':Math.round(lo)+'–'+Math.round(hi)}</span>
+        <div class="tip">Random variance ±${Math.round(v*100)}%. Actual cups sold will land somewhere in this band.</div></div>
+      ${!locked?`
+      <div class="dbar-range">
+        <div class="dbar-hi" style="width:${bpHi}%"></div>
+        <div class="dbar-lo" style="width:${bpLo}%"></div>
+        <div class="dbar-mid" style="left:calc(${bpMid}% - 1.5px)"></div>
+      </div>
+      <div class="variance-label">↔ demand range</div>`:'<div class="dbar-w"><div class="dbar" style="width:0%"></div></div>'}
+    </div>`;
+  }).join('');
+}
+
+function renderDecisions(){
+  const mktBoost=(MARKETING_OPTIONS.find(m=>m.id===G.mktChoice)||{boost:0}).boost;
+  const drinks=[{k:'latte',e:'🥛',n:'Latte'},{k:'espresso',e:'⚡',n:'Espresso'}];
+  if(G.unlocked.americano) drinks.push({k:'americano',e:'🫗',n:'Americano'});
+  if(G.unlocked.hotchoc)   drinks.push({k:'hotchoc',e:'🍫',n:'Hot Choc'});
+
+  let html='';
+
+  // ── Pricing ──
+  html+=`<div class="dsection">💰 Pricing</div>`;
+  drinks.forEach(d=>{
+    const diff=G.prices[d.k]-BPRICE[d.k];
+    const hc=diff>0.5?'warn':diff<-0.4?'ok':'neutral';
+    const ht=diff>0.5?`↑${diff.toFixed(2)} above default — demand drops`
+            :diff<-0.4?`↓${Math.abs(diff).toFixed(2)} below default — thin margin`
+            :'Near default price';
+    const estRev=G.prices[d.k]*demForecast(d.k,G.event||{},mktBoost);
+    html+=`<div>
+      <div class="dlabel">${d.e} ${d.n} Price
+        <span class="tip-wrap"><i class="iicon">i</i>
+        <div class="tip">Est. revenue: ${fmt(estRev)} at current price. Demand elasticity means each 10p up reduces volume ~3%.</div></span>
+      </div>
+      <div class="drow">
+        <input type="range" min="1.50" max="7.50" step="0.10" value="${G.prices[d.k]}"
+          oninput="setPrice('${d.k}',this.value)" id="sl-${d.k}">
+        <div class="dval" id="pd-${d.k}">£${G.prices[d.k].toFixed(2)}</div>
+      </div>
+      <div class="phint ${hc}">${ht}</div>
+    </div>`;
+  });
+
+  // ── Launches ──
+  const canLaunchA=!G.unlocked.americano&&!G.launches.americano;
+  const canLaunchH=!G.unlocked.hotchoc&&!G.launches.hotchoc;
+  if(canLaunchA||canLaunchH||G.launches.americano||G.launches.hotchoc){
+    html+=`<div class="dsection">🌟 New Products</div>`;
+    if(canLaunchA){
+      html+=`<div><div class="dlabel">Americano</div>
+        <div class="drow"><div style="font-size:0.82rem;">Launch Americano <span style="color:#bbb;font-family:'DM Mono',monospace;font-size:0.75rem">(£200 one-off)</span></div>
+        <button class="tbtn" id="lbtn-a" onclick="toggleLaunch('americano')" style="touch-action:manipulation;">Launch</button></div>
+        <div class="unlock-hint">COGS £0.90 — excellent margin potential</div></div>`;
+    }
+    if(canLaunchH){
+      html+=`<div><div class="dlabel">Hot Chocolate</div>
+        <div class="drow"><div style="font-size:0.82rem;">Launch Hot Choc <span style="color:#bbb;font-family:'DM Mono',monospace;font-size:0.75rem">(£200 one-off)</span></div>
+        <button class="tbtn" id="lbtn-h" onclick="toggleLaunch('hotchoc')" style="touch-action:manipulation;">Launch</button></div>
+        <div class="unlock-hint">🍫 High margin (default £3.80), strong winter demand</div></div>`;
+    }
+    if(G.launches.americano) html+=`<div style="font-size:.76rem;color:var(--green)">✅ Americano launching this period!</div>`;
+    if(G.launches.hotchoc)   html+=`<div style="font-size:.76rem;color:var(--green)">✅ Hot Chocolate launching this period!</div>`;
+  }
+
+  // ── Marketing ──
+  html+=`<div class="dsection">📣 Marketing & Promotions
+    <span class="tip-wrap"><i class="iicon">i</i>
+    <div class="tip">Marketing boosts demand for ALL products this period. Cost comes off your cash before profit is calculated.</div></span>
+  </div>`;
+  html+=`<div><div class="mkt-grid">`;
+  MARKETING_OPTIONS.forEach(m=>{
+    const sel=G.mktChoice===m.id;
+    const canAfford=G.cash>=m.cost;
+    html+=`<button class="mkt-btn ${sel?'selected':''} ${!canAfford&&m.cost>0?'disabled':''}"
+      onclick="setMkt('${m.id}')" ${!canAfford&&m.cost>0?'disabled':''} style="touch-action:manipulation;">
+      <div class="mkt-name">${m.icon} ${m.name}</div>
+      <div class="mkt-sub">${m.cost>0?'Cost: £'+m.cost:'Free'}</div>
+      ${m.boost>0?`<div class="mkt-impact">+${Math.round(m.boost*100)}% demand</div>`:'<div class="mkt-impact" style="color:#aaa">No boost</div>'}
+    </button>`;
+  });
+  html+=`</div></div>`;
+
+  document.getElementById('darea').innerHTML=html;
+  if(document.getElementById('lbtn-a')&&G.launches.americano) document.getElementById('lbtn-a').classList.add('active');
+  if(document.getElementById('lbtn-h')&&G.launches.hotchoc)   document.getElementById('lbtn-h').classList.add('active');
+}
+
+function setPrice(k,v){
+  G.prices[k]=parseFloat(v);
+  document.getElementById(`pd-${k}`).textContent='£'+parseFloat(v).toFixed(2);
+  renderProducts(); renderDecisions(); renderBE(); renderAdvisor();
+}
+
+function toggleLaunch(k){
+  G.launches[k]=!G.launches[k];
+  renderDecisions(); renderAdvisor();
+}
+
+function setMkt(id){
+  const opt=MARKETING_OPTIONS.find(m=>m.id===id);
+  if(opt.cost>G.cash){toast('Not enough cash for this marketing option','warn');return;}
+  G.mktChoice=id;
+  renderDecisions(); renderProducts(); renderBE(); renderAdvisor();
+  if(id!=='none') toast(`${opt.icon} ${opt.name} selected — +${Math.round(opt.boost*100)}% demand boost`,'good');
+}
+
+// ── BREAKEVEN (live, with projected overlay) ──
+function renderBE(){
+  const mkt=MARKETING_OPTIONS.find(m=>m.id===G.mktChoice)||{boost:0,cost:0};
+  const {rev,vc}=totals(G.prices, mkt.boost);
+  const fc=FIXED+(G.staff-2)*SCOST;
+  const mktCost=mkt.cost;
+  const cont=rev-vc;
+  const totalFixed=fc+mktCost;
+  const pct=Math.min(100,cont>0?(cont/fc)*100:0);
+  const proj=cont-totalFixed; // projected profit incl. mkt cost
+  const over=proj>=0;
+  const overCont=cont>=fc;
+
+  // "baseline" contribution without marketing for the purple projected bar
+  const {rev:revBase, vc:vcBase}=totals(G.prices,0);
+  const contBase=revBase-vcBase;
+  const basePct=Math.min(100,contBase>0?(contBase/fc)*100:0);
+  const projPct=Math.min(100,cont>0?(cont/fc)*100:0);
+  const purpleWidth=Math.max(0,projPct-basePct);
+
+  document.getElementById('be-area').innerHTML=`
+    <div style="display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:5px;">
+      <span class="tip-wrap">Revenue: <b style="font-family:'DM Mono',monospace">${fmt(rev)}</b>
+        <div class="tip">Total forecast sales across all active drinks</div></span>
+      <span class="tip-wrap">Fixed+Mkt: <b style="font-family:'DM Mono',monospace">${fmt(totalFixed)}</b>
+        <div class="tip">Rent £${FIXED} + Staff £${(G.staff-2)*SCOST} + Marketing £${mktCost}</div></span>
+    </div>
+    <div class="bebar-w">
+      <div class="bebar ${overCont?'over':'under'}" style="width:${basePct}%"></div>
+      ${mkt.boost>0?`<div class="bebar-proj" style="width:${purpleWidth}%;right:${100-Math.min(100,basePct+purpleWidth)}%"></div>`:''}
+    </div>
+    <div class="benums">
+      <span class="tip-wrap">Contribution: ${fmt(cont)}<div class="tip">Revenue minus variable (ingredient) costs.</div></span>
+      <span>${Math.round(pct)}% of breakeven</span>
+    </div>
+    ${mkt.boost>0?`<div class="be-proj-row">
+      <div><span class="proj-label">📣 Mkt boost adds</span><br>+${fmt(rev-(revBase||rev))} revenue, costs £${mktCost}</div>
+      <div style="text-align:right"><div class="proj-label">Projected profit</div>
+        <div class="proj-val" style="color:${over?'var(--green)':'var(--red)'}">${fmt(proj)}</div></div>
+    </div>`:`
+    <div style="margin-top:8px;padding:8px 11px;background:${over?'rgba(58,107,74,.09)':'rgba(139,44,44,.07)'};border-radius:10px;font-size:.8rem;display:flex;justify-content:space-between;align-items:center;">
+      <span>${over?'✅ Projected profit':'⚠ Projected loss'}</span>
+      <span style="font-family:'DM Mono',monospace;font-weight:600;color:${over?'var(--green)':'var(--red)'}">${fmt(proj)}</span>
+    </div>`}
+    <div style="margin-top:7px;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:0.75rem;">
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;" class="tip-wrap">
+        Var. costs<div class="tip">Ingredient costs across all forecast cups</div>
+        <div style="font-family:'DM Mono',monospace;font-weight:500;margin-top:1px">${fmt(vc)}</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;" class="tip-wrap">
+        Gap to BE<div class="tip">How much more contribution needed (before mkt cost)</div>
+        <div style="font-family:'DM Mono',monospace;font-weight:500;margin-top:1px;color:${overCont?'var(--green)':'var(--red)'}">
+          ${overCont?'✓ Covered':fmt(fc-cont)+' needed'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderInv(){
+  const items=[
+    {k:'latte',n:'Milk & Syrups',max:80},
+    {k:'espresso',n:'Espresso Beans',max:80},
+    {k:'americano',n:'Americano Blend',max:80},
+    {k:'hotchoc',n:'Choc Powder',max:80},
+    {k:'cups',n:'Cups & Packaging',max:100},
+  ];
+  document.getElementById('inv-area').innerHTML=items.map(i=>{
+    const v=G.inv[i.k]||0;
+    if(!G.unlocked[i.k]&&i.k!=='cups')
+      return`<div class="iitem"><div class="iname">${i.n}</div><div class="ival" style="color:#ccc">N/A</div></div>`;
+    const low=v<20; const pct=Math.min(100,(v/i.max)*100);
+    return`<div class="iitem">
+      <div class="iname">${i.n}</div>
+      <div class="ival ${low?'low':'ok'}">${v}</div>
+      <div class="ibar"><div class="ibar-f ${low?'low':'ok'}" style="width:${pct}%"></div></div>
+      ${low?'<div style="font-size:.62rem;color:var(--red);margin-top:2px;">⚠ Low stock</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function renderHire(){
+  const lc=(G.staff-2)*SCOST;
+  document.getElementById('hire-area').innerHTML=`
+    <div style="font-size:0.78rem;color:#aaa;margin-bottom:8px;font-family:'DM Mono',monospace;">
+      ${G.staff} staff | Labour: £${lc}/period | Capacity: +${(G.staff-2)*12}%
+    </div>
+    <div class="hire-row">
+      <div class="hire-info"><strong>Part-time Barista</strong><span>+1 staff · +£400/period · +12% capacity</span></div>
+      <button class="hbtn" onclick="hire()" ${G.cash<600?'disabled':''} style="touch-action:manipulation;">Hire</button>
+    </div>
+    <div class="hire-row">
+      <div class="hire-info"><strong>Senior Barista</strong><span>+1 staff · +£400/period · quality</span></div>
+      <button class="hbtn" onclick="hire()" ${G.cash<600?'disabled':''} style="touch-action:manipulation;">Hire</button>
+    </div>
+    <div class="hire-row">
+      <div class="hire-info"><strong>Lay off 1 staff</strong><span>Save £400/period, lose capacity</span></div>
+      <button class="hbtn" onclick="layoff()" ${G.staff<=1?'disabled':''} style="color:var(--red);border-color:rgba(139,44,44,.3);touch-action:manipulation;">Let Go</button>
+    </div>`;
+}
+
+function hire(){
+  if(G.cash<600){toast('Not enough cash to hire','warn');return;}
+  G.staff++; toast(`Hired! +12% capacity. Fixed costs now £${FIXED+(G.staff-2)*SCOST}/period`); renderAll();
+}
+function layoff(){
+  if(G.staff<=1) return;
+  G.staff--; toast('Staff reduced. Saving £400/period'); renderAll();
+}
+
+function renderHistory(){
+  const list=document.getElementById('hlist');
+  if(!G.history.length){list.innerHTML='<div style="font-size:.73rem;color:#bbb;text-align:center;padding:10px 0;">No periods yet.</div>';return;}
+  list.innerHTML=[...G.history].reverse().map(h=>`
+    <div class="hitem">
+      <div><div class="pnum">Period ${h.period}</div><div style="font-size:.72rem;color:#aaa">${h.event}</div></div>
+      <div style="text-align:right">
+        <div class="pv ${h.profit>=0?'pos':'neg'}">${fmt(h.profit)}</div>
+        <div style="font-size:.64rem;color:#ccc">${h.cups} cups · ${h.mkt}</div>
+      </div>
+    </div>`).join('');
+}
+
+function drawChart(){
+  const canvas=document.getElementById('pchart');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.offsetWidth*dpr; canvas.height=85*dpr;
+  ctx.scale(dpr,dpr);
+  const W=canvas.offsetWidth,H=85;
+  ctx.clearRect(0,0,W,H);
+  if(!G.history.length){
+    ctx.fillStyle='#ccc'; ctx.font='11px DM Sans'; ctx.textAlign='center';
+    ctx.fillText('Chart appears after first period',W/2,H/2); return;
+  }
+  const profits=G.history.map(h=>h.profit);
+  const cum=[]; let c=0;
+  profits.forEach(p=>{c+=p;cum.push(c);});
+  const all=[...profits,...cum,0];
+  const maxV=Math.max(...all),minV=Math.min(...all);
+  const range=maxV-minV||1; const pad=10;
+  const y=v=>pad+(1-(v-minV)/range)*(H-pad*2);
+  ctx.strokeStyle='rgba(44,24,16,.1)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(pad,y(0)); ctx.lineTo(W-pad,y(0)); ctx.stroke();
+  ctx.setLineDash([]);
+  const bw=Math.max(4,(W-pad*2)/PERIODS-3);
+  for(let i=0;i<PERIODS;i++){
+    const px=pad+(i/PERIODS)*(W-pad*2)+1;
+    if(i<profits.length){
+      const p=profits[i];
+      ctx.fillStyle=p>=0?'rgba(58,107,74,.28)':'rgba(139,44,44,.28)';
+      const top=Math.min(y(0),y(p)),ht=Math.abs(y(0)-y(p));
+      ctx.fillRect(px,top,bw,Math.max(1.5,ht));
+    } else {
+      ctx.fillStyle='rgba(196,149,106,.07)'; ctx.fillRect(px,pad,bw,H-pad*2);
+    }
+  }
+  if(cum.length>1){
+    ctx.strokeStyle='rgba(44,24,16,.75)'; ctx.lineWidth=2; ctx.lineJoin='round';
+    ctx.beginPath();
+    cum.forEach((v,i)=>{
+      const xi=pad+(i/(PERIODS-1))*(W-pad*2);
+      i===0?ctx.moveTo(xi,y(v)):ctx.lineTo(xi,y(v));
+    }); ctx.stroke();
+    const lx=pad+((cum.length-1)/(PERIODS-1))*(W-pad*2);
+    ctx.beginPath(); ctx.arc(lx,y(cum[cum.length-1]),4,0,Math.PI*2);
+    ctx.fillStyle=cum[cum.length-1]>=0?'var(--green)':'var(--red)'; ctx.fill();
+  }
+  ctx.font='9px DM Mono'; ctx.fillStyle='rgba(44,24,16,.35)'; ctx.textAlign='left';
+  ctx.fillText('— cumulative P&L',pad+2,H-2);
+}
+
+// ═══════════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════════
+function endPeriod(){
+  if(G.decided) return;
+  G.decided=true;
+  document.getElementById('ep-btn').disabled=true;
+
+  // Pick event
+  G.event={...EVENTS[Math.floor(Math.random()*EVENTS.length)]};
+
+  // Unlock launches
+  if(G.launches.americano){G.unlocked.americano=true; G.inv.americano=45;}
+  if(G.launches.hotchoc)  {G.unlocked.hotchoc=true;   G.inv.hotchoc=40;}
+
+  const mkt=MARKETING_OPTIONS.find(m=>m.id===G.mktChoice)||{boost:0,cost:0};
+
+  let totRev=0,totCOGS=0,totCups=0;
+  const bk={};
+  const varDetails={};
+
+  Object.keys(BDEM).forEach(k=>{
+    if(!G.unlocked[k]) return;
+    const forecast=demForecast(k,G.event,mkt.boost);
+    const actual=demActual(k,G.event,mkt.boost);
+    const sold=Math.min(actual, G.inv[k]);
+    const rv=G.prices[k]*sold, cg=COGS[k]*sold;
+    totRev+=rv; totCOGS+=cg; totCups+=Math.round(sold);
+    G.inv[k]=Math.max(0,G.inv[k]-Math.round(sold));
+    bk[k]={sold:Math.round(sold),rev:Math.round(rv),cogs:Math.round(cg)};
+    varDetails[k]={forecast:Math.round(forecast),actual:Math.round(actual),sold:Math.round(sold)};
+  });
+  G.inv.cups=Math.max(0,G.inv.cups-totCups);
+
+  const fc=FIXED+(G.staff-2)*SCOST;
+  const launches=(G.launches.americano?200:0)+(G.launches.hotchoc?200:0);
+  const extra=(G.event.ca||0)+launches+mkt.cost;
+  const profit=totRev-totCOGS-fc-extra;
+
+  G.cash+=profit; G.cumProfit+=profit; G.totalCups+=totCups;
+
+  // Restock
+  Object.keys(BDEM).forEach(k=>{if(G.unlocked[k]) G.inv[k]=Math.min(80,G.inv[k]+55);});
+  G.inv.cups=Math.min(120,G.inv.cups+65);
+
+  G.history.push({period:G.period,profit:Math.round(profit),cups:totCups,event:G.event.title,mkt:mkt.name});
+  renderAll();
+  showResult(profit,totRev,totCOGS,fc,extra,totCups,bk,varDetails,mkt);
+}
+
+function showResult(profit,rev,cogs,fc,extra,cups,bk,varDetails,mkt){
+  const won=profit>=0;
+  const margin=rev>0?((rev-cogs)/rev*100):0;
+  let tip;
+  if(profit>600) tip=`<strong>Strong period!</strong> ${Math.round(margin)}% contribution margin. Well above fixed costs — you're building a buffer.`;
+  else if(profit>=0) tip=`<strong>Just profitable</strong> — you cleared breakeven by ${fmt(profit)}. A £0.20 price rise on all drinks would add ~${fmt(cups*0.2)} next period.`;
+  else if(profit<-800) tip=`<strong>Heavy loss.</strong> Fixed costs of ${fmt(fc+mkt.cost)} are high vs. contribution. Try raising prices £0.30–0.50, or reduce staff/marketing.`;
+  else tip=`<strong>Small loss</strong> — you need ${fmt(fc-(rev-cogs))} more contribution to break even. Small price increases across all drinks can close the gap.`;
+
+  // Variance detail rows
+  let varRows='';
+  Object.entries(varDetails).forEach(([k,d])=>{
+    const em={latte:'🥛',espresso:'⚡',americano:'🫗',hotchoc:'🍫'}[k];
+    const diff=d.actual-d.forecast;
+    const diffStr=diff>=0?`+${diff}`:`${diff}`;
+    const col=diff>=0?'var(--green)':'var(--red)';
+    varRows+=`<div class="var-row"><span>${em} ${k[0].toUpperCase()+k.slice(1)}: forecast ${d.forecast}, actual ${d.actual}</span>
+      <span style="color:${col}">${diffStr} vs forecast</span></div>`;
+  });
+
+  let drinkRows='';
+  Object.entries(bk).forEach(([k,d])=>{
+    const em={latte:'🥛',espresso:'⚡',americano:'🫗',hotchoc:'🍫'}[k];
+    drinkRows+=`<div class="rrow"><span>${em} ${k[0].toUpperCase()+k.slice(1)} (${d.sold} cups)</span>
+      <span class="rv" style="color:${d.rev-d.cogs>=0?'var(--green)':'var(--red)'}">${fmt(d.rev-d.cogs)}</span></div>`;
+  });
+
+  document.getElementById('r-box').innerHTML=`
+    <div class="rtitle">${won?'✅':'📉'} Period ${G.period} Breakdown</div>
+
+    <div style="margin-bottom:8px;padding:8px 10px;background:${G.event.type==='good'?'rgba(58,107,74,.08)':G.event.type==='bad'?'rgba(139,44,44,.07)':'rgba(44,24,16,.04)'};
+      border-radius:8px;font-size:.76rem;">
+      ${G.event.icon} <strong>${G.event.title}</strong> — ${G.event.desc}
+    </div>
+
+    <div style="margin-bottom:8px;padding:7px 10px;background:rgba(90,58,122,.06);border-radius:8px;">
+      <div style="font-size:.69rem;color:var(--purple);font-family:'DM Mono',monospace;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">🎲 Demand Variance (random this period)</div>
+      ${varRows}
+    </div>
+
+    <div class="rrow"><span>Gross Revenue</span><span class="rv">${fmt(rev)}</span></div>
+    ${drinkRows}
+    <div class="rrow"><span>Variable costs</span><span class="rv" style="color:var(--red)">−${fmt(cogs)}</span></div>
+    <div class="rrow" style="font-weight:600"><span>Contribution Margin</span><span class="rv">${fmt(rev-cogs)} (${Math.round(margin)}%)</span></div>
+    <div class="rrow"><span>Fixed costs (rent + staff)</span><span class="rv" style="color:var(--red)">−${fmt(fc)}</span></div>
+    ${mkt.cost>0?`<div class="rrow"><span>📣 Marketing (${mkt.name})</span><span class="rv" style="color:var(--red)">−£${mkt.cost}</span></div>`:''}
+    ${(extra-mkt.cost)>0?`<div class="rrow"><span>One-off costs</span><span class="rv" style="color:var(--red)">−${fmt(extra-mkt.cost)}</span></div>`:''}
+    <div class="rtotal ${won?'pos':'neg'}">
+      <span>Period Profit / Loss</span><span style="font-family:'DM Mono',monospace">${fmt(profit)}</span>
+    </div>
+    <div class="rtip">${tip}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:0.78rem;color:#aaa;flex-wrap:wrap;gap:8px;">
+      <span>Running total: <span style="font-family:'DM Mono',monospace;font-weight:600;color:${G.cumProfit>=0?'var(--green)':'var(--red)'}">${fmt(G.cumProfit)}</span></span>
+      <button class="cta" onclick="closeResult()" style="margin-top:0;padding:9px 16px;width:auto;touch-action:manipulation;">
+        ${G.period>=PERIODS?'Final Results →':'Next Period →'}
+      </button>
+    </div>`;
+  document.getElementById('r-ov').style.display='flex';
+}
+
+function closeResult(){
+  document.getElementById('r-ov').style.display='none';
+  if(G.period>=PERIODS){showGameOver();return;}
+  G.period++; G.decided=false;
+  G.launches={americano:false,hotchoc:false};
+  G.mktChoice='none';
+  G.event=null;
+  document.getElementById('ep-btn').disabled=false;
+  document.getElementById('ep-btn').textContent='End Period & See Results →';
+  renderAll();
+  toast(`Period ${G.period} — make your decisions!`);
+}
+
+function showGameOver(){
+  const won=G.cumProfit>0;
+  const pp=G.history.filter(h=>h.profit>=0).length;
+  const best=Math.max(...G.history.map(h=>h.profit));
+  const worst=Math.min(...G.history.map(h=>h.profit));
+  const mktPeriods=G.history.filter(h=>h.mkt!=='No Marketing').length;
+  document.getElementById('go-emoji').textContent=won?(G.cumProfit>3000?'🏆':'✅'):'😔';
+  document.getElementById('go-title').textContent=won?'Café Profitable!':'Café in the Red';
+  document.getElementById('go-desc').textContent=won
+    ?`You made it through 10 periods and built a profitable café! ${pp}/10 periods were profitable. ${mktPeriods} periods used marketing.`
+    :`After 10 periods, the café is still in the red. Key reminder: £${FIXED}/period in fixed rent must be covered before any profit is possible. Try bolder pricing and targeted marketing next time!`;
+  document.getElementById('go-stat').textContent=fmt(G.cumProfit);
+  document.getElementById('go-stat').className='fstat '+(won?'pos':'neg');
+  document.getElementById('go-br').innerHTML=`
+    <div class="si">Total Cups<strong>${G.totalCups}</strong></div>
+    <div class="si">Profitable Periods<strong>${pp} / 10</strong></div>
+    <div class="si">Best Period<strong>${fmt(best)}</strong></div>
+    <div class="si">Worst Period<strong>${fmt(worst)}</strong></div>
+    <div class="si">Mkt Periods<strong>${mktPeriods} / 10</strong></div>
+    <div class="si">Final Cash<strong>${fmt(G.cash)}</strong></div>`;
+  document.getElementById('go-ov').style.display='flex';
+}
+
+function restartGame(){document.getElementById('go-ov').style.display='none'; init();}
+
+function toast(msg,type=''){
+  const w=document.getElementById('twrap');
+  const t=document.createElement('div');
+  t.className='toast '+(type||''); t.textContent=msg;
+  w.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},3200);
+}
+
+function closeTut(){document.getElementById('tut-ov').style.display='none';}
+window.addEventListener('resize', drawChart);
+
+init();
+</script>
+</body>
+</html>
